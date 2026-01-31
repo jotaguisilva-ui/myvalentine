@@ -700,6 +700,7 @@
     let noHoverCount = 0;
     let noPopupShown = false;
     let fallingPhotosInterval = null;
+    const isMobile = window.innerWidth <= 480;
 
     yesBtn.addEventListener("click", () => {
       message.textContent = "Best. Choose. Ever. 💕";
@@ -720,17 +721,14 @@
       }, 650);
     });
 
-    // BOTÃO VOLTAR ATRÁS
     backBtn.addEventListener("click", () => {
       card.classList.add("fade-out-up");
       
-      // Para as fotos a cair
       if (fallingPhotosInterval) {
         clearInterval(fallingPhotosInterval);
         fallingPhotosInterval = null;
       }
       
-      // Remove fotos a cair que ainda estão no ecrã
       document.querySelectorAll(".falling-photo").forEach(img => img.remove());
 
       setTimeout(() => {
@@ -747,6 +745,9 @@
         
         // Reset botão NO
         noBtn.style.position = "static";
+        noBtn.style.transform = "scale(1)";
+        noBtn.style.fontSize = "";
+        noBtn.style.padding = "";
         noHoverCount = 0;
         noPopupShown = false;
       }, 650);
@@ -764,13 +765,42 @@
       }
     }
 
-    noBtn.addEventListener("mouseover", moveNoButton);
-    function moveNoButton() {
+    // COMPORTAMENTO: MOBILE (click) vs DESKTOP (mouseover)
+    if (isMobile) {
+      noBtn.addEventListener("click", handleNoButtonMobile);
+    } else {
+      noBtn.addEventListener("mouseover", handleNoButtonDesktop);
+    }
+
+    function handleNoButtonMobile() {
       noHoverCount++;
+
+      // Diminui o botão
+      const newScale = Math.max(0.3, 1 - (noHoverCount * 0.15));
+      const newFontSize = Math.max(0.5, 1.05 - (noHoverCount * 0.1));
+      const newPadding = Math.max(6, 14 - (noHoverCount * 2));
+      
+      noBtn.style.transform = `scale(${newScale})`;
+      noBtn.style.fontSize = `${newFontSize}rem`;
+      noBtn.style.padding = `${newPadding}px ${newPadding * 1.5}px`;
+
+      // Mostra popup após 3 cliques
       if (noHoverCount >= 3 && !noPopupShown) {
         noPopupShown = true;
         noPopupOverlay.style.display = "flex";
       }
+    }
+
+    function handleNoButtonDesktop() {
+      noHoverCount++;
+
+      // Mostra popup após 3 hovers
+      if (noHoverCount >= 3 && !noPopupShown) {
+        noPopupShown = true;
+        noPopupOverlay.style.display = "flex";
+      }
+      
+      // Foge pelo ecrã
       const padding = 20;
       const maxX = window.innerWidth - noBtn.offsetWidth - padding;
       const maxY = window.innerHeight - noBtn.offsetHeight - padding;
@@ -831,5 +861,6 @@
       }, 400);
     }
   </script>
+
 </body>
 </html>
