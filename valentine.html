@@ -344,17 +344,37 @@
       background: rgba(255,75,110,0.15);
       color: #ff4b6e;
       border: 1px solid rgba(255,75,110,0.4);
-      padding: 4px 12px;
+      padding: 6px 16px;
       border-radius: 16px;
-      font-size: 0.75rem;
+      font-size: 0.85rem;
       cursor: pointer;
-      margin-top: 12px;
+      margin-top: 16px;
       transition: all 0.2s ease;
       display: inline-block;
     }
 
     #gallery-btn-second-screen:hover {
       background: rgba(255,75,110,0.25);
+      transform: translateY(-1px);
+    }
+
+    /* BOTÃO VOLTAR ATRÁS */
+    #back-btn {
+      background: rgba(255,75,110,0.1);
+      color: #ff4b6e;
+      border: 1px solid rgba(255,75,110,0.3);
+      padding: 6px 16px;
+      border-radius: 16px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      margin-top: 16px;
+      margin-left: 8px;
+      transition: all 0.2s ease;
+      display: inline-block;
+    }
+
+    #back-btn:hover {
+      background: rgba(255,75,110,0.2);
       transform: translateY(-1px);
     }
 
@@ -441,7 +461,6 @@
       text-align: center;
     }
 
-    /* LIGHTBOX (foto em grande) */
     #lightbox {
       position: fixed;
       inset: 0;
@@ -480,43 +499,56 @@
       background: rgba(255,255,255,0.3);
     }
 
-    /* MOBILE OTIMIZADO */
+    /* MOBILE OTIMIZADO - CARD MAIOR */
     @media (max-width: 480px) {
       body {
-        padding: 16px;
+        padding: 12px;
       }
 
       .card {
-        padding: 20px 16px 18px;
+        padding: 28px 20px 24px;
+        max-width: 100%;
+        min-height: 85vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .heart {
+        font-size: 56px;
       }
 
       h1 {
-        font-size: 1.4rem;
+        font-size: 1.6rem;
         line-height: 1.3;
       }
 
       .subtext {
-        font-size: 0.9rem;
+        font-size: 1rem;
       }
 
       .quote {
-        font-size: 0.88rem;
+        font-size: 0.95rem;
       }
 
       .buttons {
         flex-direction: column;
-        gap: 12px;
+        gap: 14px;
       }
 
       button {
-        padding: 12px 20px;
-        font-size: 1rem;
+        padding: 14px 24px;
+        font-size: 1.05rem;
         width: 100%;
       }
 
       .photos {
         grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
         gap: 8px;
+      }
+
+      .photos-title {
+        font-size: 0.85rem;
       }
 
       #photo-gallery-popup {
@@ -547,11 +579,18 @@
       }
 
       #second-screen h2 {
-        font-size: 1.3rem !important;
+        font-size: 1.45rem !important;
+        line-height: 1.3 !important;
       }
 
       #second-screen p {
-        font-size: 0.9rem !important;
+        font-size: 1rem !important;
+      }
+
+      #gallery-btn-second-screen,
+      #back-btn {
+        font-size: 0.95rem;
+        padding: 8px 18px;
       }
     }
   </style>
@@ -602,6 +641,7 @@
          💗💗💗💗💗💗💗💗💗💗💗💗💗💗💗💗💗💗💗💗💗💗a proxima sessão fotografica é na holanda ;)
       </p>
       <button id="gallery-btn-second-screen">📸 ver todas</button>
+      <button id="back-btn">← voltar</button>
     </div>
   </div>
 
@@ -625,7 +665,6 @@
     </div>
   </div>
 
-  <!-- LIGHTBOX FULLSCREEN -->
   <div id="lightbox">
     <button id="lightbox-close">✕</button>
     <img id="lightbox-img" src="" alt="Foto grande">
@@ -647,6 +686,7 @@
     const message = document.getElementById("message");
     const card = document.querySelector(".card");
     const secondScreen = document.getElementById("second-screen");
+    const backBtn = document.getElementById("back-btn");
     const noPopupOverlay = document.getElementById("no-popup-overlay");
     const noPopupClose = document.getElementById("no-popup-close");
     const galleryBtnSecondScreen = document.getElementById("gallery-btn-second-screen");
@@ -659,6 +699,7 @@
 
     let noHoverCount = 0;
     let noPopupShown = false;
+    let fallingPhotosInterval = null;
 
     yesBtn.addEventListener("click", () => {
       message.textContent = "Best. Choose. Ever. 💕";
@@ -671,10 +712,43 @@
         document.querySelector(".quote").style.display = "none";
         document.querySelector(".photos-title").style.display = "none";
         document.querySelector(".photos").style.display = "none";
+        message.style.display = "none";
         secondScreen.style.display = "block";
         secondScreen.classList.add("fade-in");
         card.classList.remove("fade-out-up");
         startFallingPhotos();
+      }, 650);
+    });
+
+    // BOTÃO VOLTAR ATRÁS
+    backBtn.addEventListener("click", () => {
+      card.classList.add("fade-out-up");
+      
+      // Para as fotos a cair
+      if (fallingPhotosInterval) {
+        clearInterval(fallingPhotosInterval);
+        fallingPhotosInterval = null;
+      }
+      
+      // Remove fotos a cair que ainda estão no ecrã
+      document.querySelectorAll(".falling-photo").forEach(img => img.remove());
+
+      setTimeout(() => {
+        secondScreen.style.display = "none";
+        secondScreen.classList.remove("fade-in");
+        document.querySelector(".buttons").style.display = "flex";
+        document.querySelector(".subtext").style.display = "block";
+        document.querySelector(".quote").style.display = "block";
+        document.querySelector(".photos-title").style.display = "block";
+        document.querySelector(".photos").style.display = "grid";
+        message.style.display = "block";
+        message.textContent = "";
+        card.classList.remove("fade-out-up");
+        
+        // Reset botão NO
+        noBtn.style.position = "static";
+        noHoverCount = 0;
+        noPopupShown = false;
       }, 650);
     });
 
@@ -746,7 +820,7 @@
     });
 
     function startFallingPhotos() {
-      setInterval(() => {
+      fallingPhotosInterval = setInterval(() => {
         const img = document.createElement("img");
         img.src = photoRepository[Math.floor(Math.random() * photoRepository.length)];
         img.classList.add("falling-photo");
